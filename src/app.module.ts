@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { PassportModule } from '@nestjs/passport';
       secret: process.env.JWT_SECRET
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI!),
-    PassportModule.register({defaultStrategy: "google"})
+    PassportModule.register({defaultStrategy: "google"}),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

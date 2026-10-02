@@ -49,6 +49,7 @@ export class AuthService {
 
     const payLoad = {
       userId: existUser._id,
+      userRole: existUser.role
     };
     const token = await this.jwtService.sign(payLoad, { expiresIn: '1h' });
     return { token };

@@ -17,17 +17,17 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') {id}: IsValidMongoIdDto) {
+  findOne(@Param() {id}: IsValidMongoIdDto) {
     return this.usersService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') {id}: IsValidMongoIdDto, @Body() updateUserDto: UpdateUserDto) {
+  update(@Param() {id}: IsValidMongoIdDto, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') {id}: IsValidMongoIdDto) {
+  remove(@Param() {id}: IsValidMongoIdDto) {
     return this.usersService.remove(id);
   }
 }

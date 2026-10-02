@@ -1,26 +1,60 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { SignUpDto } from './dto/sign-up.dto';
+import * as bcrypt from 'bcrypt';
+import { SignInDto } from './dto/sign-in.dto';
+import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    private readonly usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
+
+  async signUp({ age, email, fullName, password }: SignUpDto) {
+    const existUser = await this.usersService.findByEmail(email);
+
+    if (existUser) {
+      throw new BadRequestException('User already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.usersService.createAuthUser({
+      email,
+      age,
+      fullName,
+      password: hashedPassword,
+      avatarUrl: '',
+    });
+
+    return {
+      success: true,
+      message: 'user created successfully',
+    };
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async signIn({ password, email }: SignInDto) {
+    const existUser = await this.usersService.findByEmail(email, true);
+
+    if (!existUser) {
+      throw new BadRequestException('Email or password is invalid');
+    }
+
+    const isPassEqual = await bcrypt.compare(password, existUser.password);
+    if (!isPassEqual) {
+      throw new BadRequestException('Email or password is invalid');
+    }
+
+    const payLoad = {
+      userId: existUser._id,
+    };
+    const token = await this.jwtService.sign(payLoad, { expiresIn: '1h' });
+    return { token };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async getCurrentUser(userId: string) {
+    return this.usersService.findOne(userId);
   }
 }

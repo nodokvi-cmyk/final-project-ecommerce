@@ -32,4 +32,8 @@ export class ProductQueryDto extends PaginationDto {
     @IsNumber()
     @Transform(({value}) => Number(value))
     priceTo?: number
+
+    @IsOptional()
+    @IsString()
+    sort?: string
 }

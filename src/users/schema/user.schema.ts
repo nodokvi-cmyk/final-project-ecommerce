@@ -47,7 +47,7 @@ export class User {
         type: String,
         default: ""
     })
-    avatarUrl!: string
+    avatarUrl?: string
 }
 
 export const userSchema = SchemaFactory.createForClass(User)

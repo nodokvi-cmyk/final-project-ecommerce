@@ -1,3 +1,6 @@
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import {Logger} from "pino-nestjs"
@@ -6,9 +9,11 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {bufferLogs: true});
 
-    app.useLogger(app.get(Logger))
+  app.enableCors()
 
-    app.useGlobalPipes(new ValidationPipe({
+  app.useLogger(app.get(Logger))
+
+  app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true
   }))

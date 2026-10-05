@@ -28,7 +28,7 @@ export class UsersController {
       }),
     )
     file: Express.Multer.File,
-    @Param("id") {id}: IsValidMongoIdDto,
+    @Param() {id}: IsValidMongoIdDto,
     @UserId() userId
   ){
     if(userId !== id) throw new ForbiddenException("No permission")
@@ -38,7 +38,7 @@ export class UsersController {
   @Delete(":id/avatar")
   @UseGuards(IsAuthGuard)
   deleteAvatar(
-    @Param("id") {id}: IsValidMongoIdDto,
+    @Param() {id}: IsValidMongoIdDto,
     @UserId() userId
   ){
     if(userId !== id) throw new ForbiddenException("No permission")
@@ -53,14 +53,14 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param("id") {id}: IsValidMongoIdDto) {
+  findOne(@Param() {id}: IsValidMongoIdDto) {
     return this.usersService.findOne(id);
   }
 
   @Patch(':id')
   @UseGuards(IsAuthGuard)
   update(
-    @Param("id") {id}: IsValidMongoIdDto, 
+    @Param() {id}: IsValidMongoIdDto, 
     @Body() updateUserDto: UpdateUserDto,
     @UserId() userId
   ) {
@@ -71,7 +71,7 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(IsAuthGuard)
   remove(
-    @Param("id") {id}: IsValidMongoIdDto,
+    @Param() {id}: IsValidMongoIdDto,
     @UserId() userId
   ){
     if(userId !== id) throw new ForbiddenException("No permission")

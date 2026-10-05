@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from '../users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailSenderModule } from '../email-sender/email-sender.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         secret: configService.getOrThrow<string>('JWT_SECRET'),
       }),
     }),
+    EmailSenderModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

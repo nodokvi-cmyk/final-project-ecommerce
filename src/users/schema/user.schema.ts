@@ -37,13 +37,13 @@ export class User {
   age!: number;
 
   @Prop({ default: false })
-  isVerified: boolean;
+  isVerified!: boolean;
 
   @Prop({ type: String })
-  OTPCode: string;
+  OTPCode!: string;
 
   @Prop({ type: Number })
-  OTPCodeExpirationDate: number;
+  OTPCodeExpirationDate!: number;
 
   @Prop({
     type: String,

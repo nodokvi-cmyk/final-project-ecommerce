@@ -37,6 +37,8 @@ export class AuthService {
       OTPCodeExpirationDate: otpCodeExpirationDate,
     });
 
+    await this.emailSenderService.sendVerificationCode(email, otpCode)
+
     return {
       success: true,
       message: 'user created successfully',
@@ -54,6 +56,8 @@ export class AuthService {
     if (!isPassEqual) {
       throw new BadRequestException('Email or password is invalid');
     }
+
+    if(!existUser.isVerified) throw new BadRequestException("Your account hasn't been verified yet")
 
     const payLoad = {
       userId: existUser._id,

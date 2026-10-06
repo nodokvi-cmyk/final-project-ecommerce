@@ -1,26 +1,37 @@
-import { Injectable } from '@nestjs/common';
-import { CreateWishlistDto } from './dto/create-wishlist.dto';
-import { UpdateWishlistDto } from './dto/update-wishlist.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from '../users/schema/user.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class WishlistService {
-  create(createWishlistDto: CreateWishlistDto) {
-    return 'This action adds a new wishlist';
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>
+  ){}
+
+  async getWishlist(userId: string){
+    const user = await this.userModel.findById(userId).populate("wishlist")
+    if(!user) throw new NotFoundException("User not found")
+
+    return user.wishlist
   }
 
-  findAll() {
-    return `This action returns all wishlist`;
+  async addProductToWishlist(userId: string, productId: string){
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, 
+      {$addToSet: {wishlist: productId}},
+      {new: true}
+    )
+    if(!updatedUser) throw new NotFoundException("User not found")
+
+    return updatedUser.wishlist
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} wishlist`;
-  }
-
-  update(id: number, updateWishlistDto: UpdateWishlistDto) {
-    return `This action updates a #${id} wishlist`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} wishlist`;
+  async removeProductFromWishlist(userId: string, productId: string){
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, 
+      {$pull: {wishlist: productId}},
+      {new: true}
+    )
+    if(!updatedUser) throw new NotFoundException("User not found")
+    return updatedUser.wishlist
   }
 }

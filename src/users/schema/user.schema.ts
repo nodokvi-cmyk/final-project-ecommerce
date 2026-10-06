@@ -63,7 +63,7 @@ export class User {
     type: [{type: Types.ObjectId, ref: "Product"}],
     default: []
   })
-  wishList!: Types.ObjectId[]
+  wishlist!: Types.ObjectId[]
 }
 
 export const userSchema = SchemaFactory.createForClass(User);

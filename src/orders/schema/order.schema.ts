@@ -61,7 +61,8 @@ export class Order {
     totalAmount!: number
 
     @Prop({
-        type: OrderStatus,
+        type: String,
+        enum: OrderStatus,
         required: true,
         default: OrderStatus.PENDING
     })

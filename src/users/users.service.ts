@@ -133,7 +133,7 @@ export class UsersService {
   ): Promise<HydratedDocument<User> | null> {
     const query = this.userModel.findOne({ email });
 
-    return includePassword ? query.select('password') : query;
+    return includePassword ? query.select('+password') : query;
   }
 
   async findOne(id: string) {

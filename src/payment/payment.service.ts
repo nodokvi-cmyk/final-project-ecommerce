@@ -34,7 +34,7 @@ export class PaymentService {
           product_data: {
             name: item.name,
           },
-          unit_amount: item.price,
+          unit_amount: item.price * 100,
         },
         quantity: item.quantity,
       }))
@@ -61,6 +61,7 @@ export class PaymentService {
       })
       return {url: session.url}
     }catch(e){
+      console.log('--- STRIPE ERROR DETAILS ---', e)
       this.logger.error("Failed to create checkout session", e)
       throw new InternalServerErrorException("Payment session creation failed")
     }

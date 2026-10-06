@@ -37,7 +37,11 @@ export class AuthService {
       OTPCodeExpirationDate: otpCodeExpirationDate,
     });
 
-    await this.emailSenderService.sendVerificationCode(email, otpCode)
+    try{
+      await this.emailSenderService.sendVerificationCode(email, otpCode)
+    }catch(e) {
+      throw new BadRequestException("Failed to send the verificatoin email")
+    }
 
     return {
       success: true,

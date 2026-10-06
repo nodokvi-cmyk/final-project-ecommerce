@@ -2,6 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomInt } from 'crypto';
 import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
 
 const OTP_EXPIRATION_MS = 10 * 60 * 1000;
 
@@ -10,6 +11,7 @@ export class EmailSenderService {
   constructor(
     private readonly emailService: MailerService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService
   ) {}
 
   createVerificationCode() {
@@ -20,10 +22,12 @@ export class EmailSenderService {
   }
 
   async sendVerificationCode(to: string, otpCode: string) {
+    const emailUser = this.configService.get<string>('EMAIL_USER')
+
     const options = {
       to,
       subject: `${otpCode} is your gamesense verification code`,
-      from: 'gamesense <bloxnick2000@gmail.com>',
+      from: `gamesense <${emailUser}>`,
       text: `Your verification code is ${otpCode}. It expires in 10 minutes. If you did not request it, ignore this email.`,
     };
 

@@ -14,6 +14,7 @@ import { CartModule } from './cart/cart.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrdersModule } from './orders/orders.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { EmailSenderModule } from './email-sender/email-sender.module.js';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     PaymentModule,
     OrdersModule,
     WishlistModule,
+    EmailSenderModule
   ],
   controllers: [AppController],
   providers: [AppService],

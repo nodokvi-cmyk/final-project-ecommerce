@@ -7,7 +7,7 @@ import { Logger } from 'pino-nestjs';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true});
 
   app.enableCors();
 

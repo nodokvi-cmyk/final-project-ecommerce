@@ -67,6 +67,7 @@ export class ProductsService {
   }
 
   async findAll(query: ProductQueryDto = {}) {
+    console.log('--- QUERY RECEIVED FROM FRONTEND ---', query);
     const {page = 1,take = 10, name, category, isInStock, priceFrom, priceTo, sort} = query
     
     const filter: any = {}
@@ -81,8 +82,8 @@ export class ProductsService {
     filter['price'] = { ...filter.price, $lte: priceTo }
   }
 
-  if (name) {
-    filter['name'] = { $regex: name, $options: 'i' }
+  if (name && name.trim() !== '') {
+    filter['productName'] = new RegExp(name.trim(), 'i');
   }
 
   if (category) {
@@ -120,6 +121,7 @@ export class ProductsService {
     .limit(take)
     .exec()
 
+    console.log('--- MONGOOSE FILTER ---', filter);
   return resp
 }
 

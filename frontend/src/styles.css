@@ -199,6 +199,8 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .product-image {
   height: 270px;
@@ -214,6 +216,9 @@ h3 {
 }
 .product-info {
   padding: 17px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .muted {
   color: var(--muted);
@@ -223,7 +228,8 @@ h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 15px 0;
+  margin: auto 0 15px;
+  padding-top: 15px;
 }
 .stock {
   font-size: 12px;

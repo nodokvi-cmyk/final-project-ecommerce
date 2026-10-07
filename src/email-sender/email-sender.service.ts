@@ -11,7 +11,7 @@ export class EmailSenderService {
   constructor(
     private readonly emailService: MailerService,
     private readonly usersService: UsersService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   createVerificationCode() {
@@ -22,7 +22,7 @@ export class EmailSenderService {
   }
 
   async sendVerificationCode(to: string, otpCode: string) {
-    const emailUser = this.configService.get<string>('EMAIL_USER')
+    const emailUser = this.configService.get<string>('EMAIL_USER');
 
     const options = {
       to,
@@ -32,6 +32,8 @@ export class EmailSenderService {
     };
 
     await this.emailService.sendMail(options);
+
+    return { success: true, message: 'Verification code sent successfully' };
   }
 
   async resendVerificationCode(email: string) {

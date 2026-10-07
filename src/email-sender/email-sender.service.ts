@@ -15,10 +15,12 @@ export class EmailSenderService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {
+    const port = this.configService.get<number>('EMAIL_PORT') || 465;
+
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('EMAIL_HOST'),
-      port: this.configService.get<number>('EMAIL_PORT'),
-      secure: false,
+      host: this.configService.get<string>('EMAIL_HOST') || 'smtp.gmail.com',
+      port: Number(port),
+      secure: Number(port) === 465,
       auth: {
         user: this.configService.get<string>('EMAIL_USER'),
         pass: this.configService.get<string>('EMAIL_PASS'),
@@ -81,7 +83,7 @@ export class EmailSenderService {
       });
       return { success: true, message: 'Verification email sent successfully' };
     } catch (error: any) {
-      console.error('NODEMAILER ERROR:', error);
+      console.error('NODEMAILER ERROR DETAILED:', error);
       throw new BadRequestException(`Failed to send email: ${error.message}`);
     }
   }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import WishlistButton from './WishlistButton';
 import type { Product } from '../types';
 export default function ProductCard({ product }: { product: Product }) {
   const { add } = useCart();
@@ -24,6 +25,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const image = product.photos?.[0];
   return (
     <article className="product-card">
+      <WishlistButton productId={product._id} />
       <Link to={`/products/${product._id}`} className="product-image">
         {image ? (
           <img src={image} alt={product.productName} />

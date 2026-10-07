@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomInt } from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { UsersService } from '../users/users.service';
@@ -8,25 +8,43 @@ import { SendEmailDto } from './dtos/send-email.dto';
 const OTP_EXPIRATION_MS = 10 * 60 * 1000;
 
 @Injectable()
-export class EmailSenderService {
+export class EmailSenderService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
 
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {
+    const host = this.configService.get<string>('EMAIL_HOST') || 'smtp.gmail.com';
+    const user = this.configService.get<string>('EMAIL_USER');
+    const pass = this.configService.get<string>('EMAIL_PASS');
+
+    console.log('--- TESTING CONFIG ---');
+    console.log('HOST:', host);
+    console.log('USER:', user);
+    console.log('PASS LENGTH:', pass ? pass.length : 0);
+
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('EMAIL_HOST') || 'smtp.gmail.com',
+      host,
       port: 587,
       secure: false,
-      auth: {
-        user: this.configService.get<string>('EMAIL_USER'),
-        pass: this.configService.get<string>('EMAIL_PASS'),
-      },
+      auth: { user, pass },
       tls: {
         rejectUnauthorized: false,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
+  }
+
+  async onModuleInit() {
+    try {
+      await this.transporter.verify();
+      console.log('✅ SMTP Connection established successfully!');
+    } catch (error) {
+      console.error('❌ SMTP CONNECTION VERIFICATION FAILED:', error);
+    }
   }
 
   createVerificationCode() {
@@ -76,16 +94,17 @@ export class EmailSenderService {
     `;
 
     try {
-      await this.transporter.sendMail({
+      const info = await this.transporter.sendMail({
         from: this.configService.get<string>('EMAIL_USER'),
         to,
         subject: 'Your Verification Code 🔑',
         html: htmlContent,
       });
+      console.log('EMAIL SENT SUCCESS:', info);
       return { success: true, message: 'Verification email sent successfully' };
     } catch (error: any) {
-      console.error('NODEMAILER ERROR DETAILED:', error);
-      throw new BadRequestException(`Failed to send email: ${error.message}`);
+      console.error('FULL SENDMAIL ERROR:', error);
+      throw new BadRequestException(`Failed to send email: ${error.message || error}`);
     }
   }
 

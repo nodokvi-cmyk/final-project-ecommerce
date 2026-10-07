@@ -5,6 +5,7 @@ import { getProduct } from '../services/products';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Loading from '../components/Loading';
+import WishlistButton from '../components/WishlistButton';
 import type { Product } from '../types';
 export default function ProductDetails() {
   const { id = '' } = useParams();
@@ -91,6 +92,7 @@ export default function ProductDetails() {
             <button className="btn" disabled={!product.stock} onClick={addItem}>
               Add to cart
             </button>
+            <WishlistButton productId={product._id} inline />
           </div>
           {message && <div className="notice">{message}</div>}
         </div>

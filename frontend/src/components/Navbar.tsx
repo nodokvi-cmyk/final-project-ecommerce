@@ -13,6 +13,7 @@ export default function Navbar() {
         </Link>
         <nav>
           <NavLink to="/products">Shop</NavLink>
+          {user && <NavLink to="/wishlist">Wishlist</NavLink>}
           {user && <NavLink to="/orders">Orders</NavLink>}
           {user?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
         </nav>

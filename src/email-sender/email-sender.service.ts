@@ -31,7 +31,14 @@ export class EmailSenderService {
       text: `Your verification code is ${otpCode}. It expires in 10 minutes. If you did not request it, ignore this email.`,
     };
 
-    await this.emailService.sendMail(options);
+    try {
+      const result = await this.emailService.sendMail(options);
+      console.log('EMAIL SENT SUCCESSFULLY:', result);
+      return { success: true, message: 'Verification code sent successfully' };
+    } catch (error: any) {
+      console.error('DETAILED EMAIL SEND ERROR:', error);
+      throw new BadRequestException(`Failed to send email: ${error.message}`);
+    }
 
     return { success: true, message: 'Verification code sent successfully' };
   }

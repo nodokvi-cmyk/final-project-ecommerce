@@ -23,9 +23,15 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // VERIFICATION
     const { otpCode, otpCodeExpirationDate } =
       this.emailSenderService.createVerificationCode();
+
+    try {
+      await this.emailSenderService.sendVerificationCode(email, otpCode);
+    } catch (e: any) {
+      console.error('SIGNUP EMAIL ERROR:', e);
+      throw new BadRequestException(`Failed to send the verification email: ${e.message}`);
+    }
 
     await this.usersService.createAuthUser({
       email,
@@ -36,12 +42,6 @@ export class AuthService {
       OTPCode: otpCode,
       OTPCodeExpirationDate: otpCodeExpirationDate,
     });
-
-    try{
-      await this.emailSenderService.sendVerificationCode(email, otpCode)
-    }catch(e) {
-      throw new BadRequestException("Failed to send the verificatoin email")
-    }
 
     return {
       success: true,
@@ -80,7 +80,6 @@ export class AuthService {
     if (!user.OTPCode || !user.OTPCodeExpirationDate) {
       throw new BadRequestException('Invalid verification code');
     }
-
 
     if (user.OTPCodeExpirationDate < Date.now()) {
       throw new BadRequestException('Verification code has expired');

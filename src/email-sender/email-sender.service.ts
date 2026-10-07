@@ -1,21 +1,29 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomInt } from 'crypto';
+import * as nodemailer from 'nodemailer';
 import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
 import { SendEmailDto } from './dtos/send-email.dto';
 
 const OTP_EXPIRATION_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class EmailSenderService {
-  private resend: Resend;
+  private transporter: nodemailer.Transporter;
 
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {
-    this.resend = new Resend(this.configService.getOrThrow<string>('RESEND_API_KEY'));
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('EMAIL_HOST'),
+      port: this.configService.get<number>('EMAIL_PORT'),
+      secure: false,
+      auth: {
+        user: this.configService.get<string>('EMAIL_USER'),
+        pass: this.configService.get<string>('EMAIL_PASS'),
+      },
+    });
   }
 
   createVerificationCode() {
@@ -36,60 +44,14 @@ export class EmailSenderService {
         <head>
           <meta charset="utf-8">
           <style>
-            body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              background-color: #f4f7f6;
-              margin: 0;
-              padding: 0;
-            }
-            .container {
-              max-width: 500px;
-              margin: 40px auto;
-              background-color: #ffffff;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            }
-            .header {
-              background-color: #4f46e5;
-              color: #ffffff;
-              padding: 25px;
-              text-align: center;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 22px;
-              font-weight: 600;
-            }
-            .content {
-              padding: 30px;
-              color: #333333;
-              text-align: center;
-            }
-            .otp-box {
-              background-color: #f3f4f6;
-              border: 2px dashed #4f46e5;
-              border-radius: 8px;
-              padding: 15px;
-              margin: 25px 0;
-              font-size: 32px;
-              font-weight: bold;
-              letter-spacing: 6px;
-              color: #4f46e5;
-            }
-            .note {
-              font-size: 13px;
-              color: #6b7280;
-              margin-top: 20px;
-            }
-            .footer {
-              background-color: #f9fafb;
-              padding: 15px;
-              text-align: center;
-              font-size: 12px;
-              color: #9ca3af;
-              border-top: 1px solid #e5e7eb;
-            }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+            .container { max-width: 500px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+            .header { background-color: #4f46e5; color: #ffffff; padding: 25px; text-align: center; }
+            .header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+            .content { padding: 30px; color: #333333; text-align: center; }
+            .otp-box { background-color: #f3f4f6; border: 2px dashed #4f46e5; border-radius: 8px; padding: 15px; margin: 25px 0; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #4f46e5; }
+            .note { font-size: 13px; color: #6b7280; margin-top: 20px; }
+            .footer { background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
           </style>
         </head>
         <body>
@@ -99,10 +61,8 @@ export class EmailSenderService {
             </div>
             <div class="content">
               <p>გამარჯობა, გამოიყენეთ ქვემოთ მოცემული კოდი ვერიფიკაციის დასასრულებლად:</p>
-              <div class="otp-box">
-                ${otpCode}
-              </div>
-              <p class="note">⚠️ კოდი აქტიურია 10 წუთის განმავლობაში. თუ ეს მოთხოვნა თქვენ არ გაგიგზავნით, უგულებელყავით ეს შეტყობინება.</p>
+              <div class="otp-box">${otpCode}</div>
+              <p class="note">⚠️ კოდი აქტიურია 10 წუთის განმავლობაში.</p>
             </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} Gamesense. All rights reserved.</p>
@@ -113,25 +73,24 @@ export class EmailSenderService {
     `;
 
     try {
-      await this.resend.emails.send({
-        from: 'gamesense <onboarding@resend.dev>',
-        to: [to],
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to,
         subject: 'Your Verification Code 🔑',
         html: htmlContent,
       });
-      console.log('OTP verification email sent successfully');
       return { success: true, message: 'Verification email sent successfully' };
     } catch (error: any) {
-      console.error('RESEND ERROR:', error);
-      throw new BadRequestException(`Failed to send verification email: ${error.message}`);
+      console.error('NODEMAILER ERROR:', error);
+      throw new BadRequestException(`Failed to send email: ${error.message}`);
     }
   }
 
   async sendEmailToSomeone({ subject, text, to }: SendEmailDto) {
     try {
-      await this.resend.emails.send({
-        from: 'gamesense <onboarding@resend.dev>',
-        to: [to],
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to,
         subject,
         text,
       });
@@ -154,8 +113,6 @@ export class EmailSenderService {
             .header h1 { margin: 0; font-size: 26px; font-weight: 600; }
             .content { padding: 30px; color: #333333; line-height: 1.6; }
             .content h2 { color: #1f2937; margin-top: 0; }
-            .btn-container { text-align: center; margin: 30px 0; }
-            .btn { background-color: #4f46e5; color: #ffffff !important; padding: 12px 28px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; }
             .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
           </style>
         </head>
@@ -167,9 +124,6 @@ export class EmailSenderService {
             <div class="content">
               <h2>გამარჯობა! 👋</h2>
               <p>მოხარულები ვართ, რომ შემოგვიერთდით Gamesense-ზე.</p>
-              <div class="btn-container">
-                <a href="https://gamesense.com" class="btn">Get Started</a>
-              </div>
             </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} Gamesense. All rights reserved.</p>
@@ -180,9 +134,9 @@ export class EmailSenderService {
     `;
 
     try {
-      await this.resend.emails.send({
-        from: 'gamesense <onboarding@resend.dev>',
-        to: [to],
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to,
         subject: 'Welcome to Our Platform! 🎉',
         html: htmlContent,
       });
@@ -204,7 +158,6 @@ export class EmailSenderService {
             .header { background-color: #ef4444; color: #ffffff; padding: 30px; text-align: center; }
             .header h1 { margin: 0; font-size: 26px; font-weight: 600; }
             .content { padding: 30px; color: #333333; line-height: 1.6; }
-            .content h2 { color: #1f2937; margin-top: 0; }
             .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
           </style>
         </head>
@@ -226,9 +179,9 @@ export class EmailSenderService {
     `;
 
     try {
-      await this.resend.emails.send({
-        from: 'gamesense <onboarding@resend.dev>',
-        to: [to],
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to,
         subject: 'Account Deactivated 😢',
         html: htmlContent,
       });

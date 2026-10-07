@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SignUpDto } from './dto/sign-up.dto';
 import * as bcrypt from 'bcrypt';
 import { SignInDto } from './dto/sign-in.dto';
@@ -72,15 +72,15 @@ export class AuthService {
   }
 
   async verifyEmail(email: string, OTPCode: string) {
-    const user = await this.usersService.findByEmail(email);
-
-    if (!user || !user.OTPCode || !user.OTPCodeExpirationDate) {
-      throw new BadRequestException('Invalid verification code');
-    }
-
+    const user = await this.usersService.findByEmail(email)
+    if(!user) throw new NotFoundException("User not found")
     if (user.isVerified) {
       throw new BadRequestException('User is already verified');
     }
+    if (!user.OTPCode || !user.OTPCodeExpirationDate) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
 
     if (user.OTPCodeExpirationDate < Date.now()) {
       throw new BadRequestException('Verification code has expired');

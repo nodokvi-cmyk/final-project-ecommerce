@@ -19,11 +19,14 @@ export class EmailSenderService {
     const pass = this.configService.get<string>('EMAIL_PASS');
 
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: { user, pass },
       family: 4,
-      pool: false, 
-      connectionTimeout: 10000,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
     } as any);
   }
 

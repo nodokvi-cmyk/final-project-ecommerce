@@ -15,7 +15,7 @@ export class AwsS3Service {
             region: process.env.AWS_REGION!,
             credentials: {
                 secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                accessKeyId: process.env.AWS_ACCESS_KEY!,
+                accessKeyId: process.env.MY_AWS_ACCESS_KEY!,
             }
         })
     }

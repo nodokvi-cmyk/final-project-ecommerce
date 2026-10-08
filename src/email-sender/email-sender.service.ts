@@ -18,24 +18,22 @@ export class EmailSenderService implements OnModuleInit {
     const host = this.configService.get<string>('EMAIL_HOST') || 'smtp.gmail.com';
     const user = this.configService.get<string>('EMAIL_USER');
     const pass = this.configService.get<string>('EMAIL_PASS');
-
-    console.log('--- TESTING CONFIG ---');
-    console.log('HOST:', host);
-    console.log('USER:', user);
-    console.log('PASS LENGTH:', pass ? pass.length : 0);
+    const port = Number(this.configService.get<number>('EMAIL_PORT')) || 465;
 
     this.transporter = nodemailer.createTransport({
       host,
-      port: 587,
-      secure: false,
+      port,
+      secure: port === 465,
       auth: { user, pass },
+      family: 4,
       tls: {
         rejectUnauthorized: false,
+        servername: 'smtp.gmail.com',
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    });
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
+    } as nodemailer.TransportOptions);
   }
 
   async onModuleInit() {

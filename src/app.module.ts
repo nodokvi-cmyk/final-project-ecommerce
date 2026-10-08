@@ -21,11 +21,13 @@ import { EmailSenderModule } from './email-sender/email-sender.module.js';
     CacheModule.register({isGlobal: true}),
     LoggerModule.forRoot({
       pinoHttp: {
-        transport: {
-          target: "pino-pretty",
-          options: {singleLine: true}
-        }
-      }
+        transport: process.env.NODE_ENV !== 'production'
+          ? {
+              target: 'pino-pretty',
+              options: { singleLine: true },
+            }
+          : undefined, 
+      },
     }),
     ConfigModule.forRoot({
       isGlobal: true

@@ -19,15 +19,15 @@ export class EmailSenderService {
     const pass = this.configService.get<string>('EMAIL_PASS');
 
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: { user, pass },
-      family: 4,
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
-    } as any);
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  family: 4, 
+  auth: { user, pass },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
+} as any);
   }
 
   createVerificationCode() {

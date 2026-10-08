@@ -8,41 +8,23 @@ import { SendEmailDto } from './dtos/send-email.dto';
 const OTP_EXPIRATION_MS = 10 * 60 * 1000;
 
 @Injectable()
-export class EmailSenderService implements OnModuleInit {
+export class EmailSenderService {
   private transporter: nodemailer.Transporter;
 
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {
-    const host = this.configService.get<string>('EMAIL_HOST') || 'smtp.gmail.com';
     const user = this.configService.get<string>('EMAIL_USER');
     const pass = this.configService.get<string>('EMAIL_PASS');
-    const port = Number(this.configService.get<number>('EMAIL_PORT')) || 465;
 
     this.transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
+      service: 'gmail',
       auth: { user, pass },
       family: 4,
-      tls: {
-        rejectUnauthorized: false,
-        servername: 'smtp.gmail.com',
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
-    } as nodemailer.TransportOptions);
-  }
-
-  async onModuleInit() {
-    try {
-      await this.transporter.verify();
-      console.log('✅ SMTP Connection established successfully!');
-    } catch (error) {
-      console.error('❌ SMTP CONNECTION VERIFICATION FAILED:', error);
-    }
+      pool: false, 
+      connectionTimeout: 10000,
+    } as any);
   }
 
   createVerificationCode() {

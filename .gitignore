@@ -44,6 +44,19 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+.env.*
+!.env.example
+
+# Vercel local link and build output
+.vercel
+
+# Local-only helper scripts (catalog seeding)
+/scripts
+/PRODUCT.md
+
+# Claude Code project files
+CLAUDE.md
+.claude/
 
 # temp directory
 .temp

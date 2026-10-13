@@ -1,186 +1,236 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './schemas/product.schema';
-import { Model} from 'mongoose';
+import { Model } from 'mongoose';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { AwsS3Service } from '../aws-s3/aws-s3.service';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import * as mime from "mime-types"
+import * as mime from 'mime-types';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
-    private awsS3Service: AwsS3Service
-  ){}
+    private awsS3Service: AwsS3Service,
+  ) {}
 
-  async create(createProductDto: CreateProductDto, files?: Array<Express.Multer.File>) {
-    const uploadedPhotoUrls: string[] = []
+  async create(
+    createProductDto: CreateProductDto,
+    files?: Array<Express.Multer.File>,
+  ) {
+    const uploadedPhotoUrls: string[] = [];
 
-    if(files && files.length > 0) {
-      for (let file of files){
-        const ext = path.extname(file.originalname)
-        const fileId = `productPhotos/${randomUUID()}${ext}`
-        const fixedMimeType = mime.lookup(file.originalname || file.mimetype)
-        
-        await this.awsS3Service.uploadFile(fileId, file.buffer, fixedMimeType)
-        const cloudFrontUri = `${process.env.CLOUDFRONT_DOMAIN_NAME}/${fileId}`
-        uploadedPhotoUrls.push(cloudFrontUri)
+    if (files && files.length > 0) {
+      for (let file of files) {
+        const ext = path.extname(file.originalname);
+        const fileId = `productPhotos/${randomUUID()}${ext}`;
+        const fixedMimeType = mime.lookup(file.originalname || file.mimetype);
+
+        await this.awsS3Service.uploadFile(fileId, file.buffer, fixedMimeType);
+        const cloudFrontUri = `${process.env.CLOUDFRONT_DOMAIN_NAME}/${fileId}`;
+        uploadedPhotoUrls.push(cloudFrontUri);
       }
     }
 
     const newProduct = await this.productModel.create({
       ...createProductDto,
-      photos: uploadedPhotoUrls
-    })
+      photos: uploadedPhotoUrls,
+    });
 
-    return newProduct
+    return newProduct;
   }
 
   async deleteSinglePhoto(productId: string, photoUrl: string) {
-    const product = await this.productModel.findById(productId)
+    const product = await this.productModel.findById(productId);
     if (!product) {
-        throw new NotFoundException('Product not found')
+      throw new NotFoundException('Product not found');
     }
 
-    const fullPhotoUrl = product.photos.find((url) => url === photoUrl || url.endsWith(photoUrl))
+    const fullPhotoUrl = product.photos.find(
+      (url) => url === photoUrl || url.endsWith(photoUrl),
+    );
 
-    if (!fullPhotoUrl){
-        throw new NotFoundException('Photo not found in this product')
+    if (!fullPhotoUrl) {
+      throw new NotFoundException('Photo not found in this product');
     }
 
     const productPhotosIndex = fullPhotoUrl.indexOf('productPhotos/');
-    const fileId = productPhotosIndex !== -1 ? fullPhotoUrl.substring(productPhotosIndex) : fullPhotoUrl
+    const fileId =
+      productPhotosIndex !== -1
+        ? fullPhotoUrl.substring(productPhotosIndex)
+        : fullPhotoUrl;
 
-    await this.awsS3Service.deleteFile(fileId)
+    await this.awsS3Service.deleteFile(fileId);
 
     const updatedProduct = await this.productModel.findByIdAndUpdate(
       productId,
       { $pull: { photos: fullPhotoUrl } },
       { new: true },
-    )
+    );
 
-    return updatedProduct
+    return updatedProduct;
+  }
+
+  async findCategories(): Promise<string[]> {
+    const categories: string[] = await this.productModel.distinct('category');
+    return categories.sort((a, b) => a.localeCompare(b));
+  }
+
+  // Shared by the list and the count so both always agree on what matches.
+  private buildFilter(query: ProductQueryDto): Record<string, unknown> {
+    const { name, category, isInStock, priceFrom, priceTo } = query;
+    const filter: Record<string, unknown> = {};
+    const price: Record<string, number> = {};
+
+    if (priceFrom !== undefined) price['$gte'] = priceFrom;
+    if (priceTo !== undefined) price['$lte'] = priceTo;
+    if (priceFrom !== undefined || priceTo !== undefined) {
+      filter['price'] = price;
+    }
+
+    if (name && name.trim() !== '') {
+      filter['productName'] = new RegExp(name.trim(), 'i');
+    }
+
+    if (category) {
+      filter['category'] = category;
+    }
+
+    if (isInStock === true) {
+      filter['stock'] = { $ne: 0 };
+    }
+
+    if (isInStock === false) {
+      filter['stock'] = 0;
+    }
+
+    return filter;
+  }
+
+  async count(query: ProductQueryDto = {}) {
+    const total = await this.productModel.countDocuments(
+      this.buildFilter(query),
+    );
+    return { total };
   }
 
   async findAll(query: ProductQueryDto = {}) {
-    console.log('--- QUERY RECEIVED FROM FRONTEND ---', query);
-    const {page = 1,take = 10, name, category, isInStock, priceFrom, priceTo, sort} = query
-    
-    const filter: any = {}
+    // console.log('--- QUERY RECEIVED FROM FRONTEND ---', query);
+    const { page = 1, take = 10, sort } = query;
 
-    const sortQuery: Record<string, 1 | -1> = {}
+    const filter = this.buildFilter(query);
 
-    if (priceFrom !== undefined) {
-    filter['price'] = { ...filter.price, $gte: priceFrom }
-  }
+    const sortQuery: Record<string, 1 | -1> = {};
 
-  if (priceTo !== undefined) {
-    filter['price'] = { ...filter.price, $lte: priceTo }
-  }
-
-  if (name && name.trim() !== '') {
-    filter['productName'] = new RegExp(name.trim(), 'i');
-  }
-
-  if (category) {
-    filter['category'] = category
-  }
-
-  if (isInStock && isInStock === true) {
-    filter['stock'] = { $ne: 0 }
-  }
-
-  if (isInStock === false) {
-    filter['stock'] = 0
-  }
-
-  if (sort && sort === 'price') {
-    sortQuery['price'] = 1
-  }
-
-  if (sort && sort === '-price') {
-    sortQuery['price'] = -1
-  }
-
-  if (sort && sort === 'date') {
-    sortQuery['_id'] = 1
-  }
-
-  if (sort && sort === '-date') {
-    sortQuery['_id'] = -1
-  }
-
-  const resp = await this.productModel
-    .find(filter)
-    .sort(sortQuery)
-    .skip((page - 1) * take)
-    .limit(take)
-    .exec()
-
-    console.log('--- MONGOOSE FILTER ---', filter);
-  return resp
-}
-
-  async findOne(id: string) {
-    const product = await this.productModel.findById(id)
-    if(!product) throw new NotFoundException("Product not found")
-
-    return product
-  }
-
-  async update(id: string, updateProductDto: UpdateProductDto, files?: Array<Express.Multer.File>) {
-    const product = await this.productModel.findById(id)
-    if(!product) throw new NotFoundException("Product not found")
-    
-    const existingPhotosCount = product.photos?.length || 0
-    const newFilesCount = files?.length || 0
-
-    if(existingPhotosCount + newFilesCount > 6){
-      throw new BadRequestException("A single product can't have more than 6 photos")
+    if (sort && sort === 'price') {
+      sortQuery['price'] = 1;
     }
 
-    const uploadedPhotoUrls: string[] = []
+    if (sort && sort === '-price') {
+      sortQuery['price'] = -1;
+    }
 
-    if(files && files.length > 0){
-      for (let file of files){
-        const ext = path.extname(file.originalname)
-        const fileId = `productPhotos/${randomUUID()}${ext}`
-        const fixedMimeType = mime.lookup(file.originalname || file.mimetype)
-        
-        await this.awsS3Service.uploadFile(fileId, file.buffer, fixedMimeType)
-        const cloudFrontUri = `${process.env.CLOUDFRONT_DOMAIN_NAME}/${fileId}`
-        uploadedPhotoUrls.push(cloudFrontUri)
+    if (sort && sort === 'date') {
+      sortQuery['_id'] = 1;
+    }
+
+    if (sort && sort === '-date') {
+      sortQuery['_id'] = -1;
+    }
+
+    // Newest first by default. Added last so a price sort keeps priority and
+    // equal prices fall back to newest first.
+    if (!('_id' in sortQuery)) {
+      sortQuery['_id'] = -1;
+    }
+
+    const resp = await this.productModel
+      .find(filter)
+      .sort(sortQuery)
+      .skip((page - 1) * take)
+      .limit(take)
+      .exec();
+
+    // console.log('--- MONGOOSE FILTER ---', filter);
+    return resp;
+  }
+
+  async findOne(id: string) {
+    const product = await this.productModel.findById(id);
+    if (!product) throw new NotFoundException('Product not found');
+
+    return product;
+  }
+
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    files?: Array<Express.Multer.File>,
+  ) {
+    const product = await this.productModel.findById(id);
+    if (!product) throw new NotFoundException('Product not found');
+
+    const existingPhotosCount = product.photos?.length || 0;
+    const newFilesCount = files?.length || 0;
+
+    if (existingPhotosCount + newFilesCount > 6) {
+      throw new BadRequestException(
+        "A single product can't have more than 6 photos",
+      );
+    }
+
+    const uploadedPhotoUrls: string[] = [];
+
+    if (files && files.length > 0) {
+      for (let file of files) {
+        const ext = path.extname(file.originalname);
+        const fileId = `productPhotos/${randomUUID()}${ext}`;
+        const fixedMimeType = mime.lookup(file.originalname || file.mimetype);
+
+        await this.awsS3Service.uploadFile(fileId, file.buffer, fixedMimeType);
+        const cloudFrontUri = `${process.env.CLOUDFRONT_DOMAIN_NAME}/${fileId}`;
+        uploadedPhotoUrls.push(cloudFrontUri);
       }
     }
 
-    const updatedProduct = await this.productModel.findByIdAndUpdate(id, {
-      ...updateProductDto,
-      $inc: {__v: 1},
-      ...(uploadedPhotoUrls.length > 0 && {
-        $push: { photos: {$each: uploadedPhotoUrls } },
-      }),
-    }, {new: true})
+    const updatedProduct = await this.productModel.findByIdAndUpdate(
+      id,
+      {
+        ...updateProductDto,
+        $inc: { __v: 1 },
+        ...(uploadedPhotoUrls.length > 0 && {
+          $push: { photos: { $each: uploadedPhotoUrls } },
+        }),
+      },
+      { new: true },
+    );
 
-    return updatedProduct
+    return updatedProduct;
   }
 
   async remove(id: string) {
-    const deletedProduct = await this.productModel.findByIdAndDelete(id)
-    if(!deletedProduct) throw new NotFoundException("Product not found")
+    const deletedProduct = await this.productModel.findByIdAndDelete(id);
+    if (!deletedProduct) throw new NotFoundException('Product not found');
 
     if (deletedProduct.photos && deletedProduct.photos.length > 0) {
       for (const photoUrl of deletedProduct.photos) {
-        const productPhotosIndex = photoUrl.indexOf('productPhotos/')
-        const fileId = productPhotosIndex !== -1 ? photoUrl.substring(productPhotosIndex) : photoUrl
+        const productPhotosIndex = photoUrl.indexOf('productPhotos/');
+        const fileId =
+          productPhotosIndex !== -1
+            ? photoUrl.substring(productPhotosIndex)
+            : photoUrl;
 
-        await this.awsS3Service.deleteFile(fileId)
+        await this.awsS3Service.deleteFile(fileId);
       }
     }
-    
-    return deletedProduct
+
+    return deletedProduct;
   }
 }

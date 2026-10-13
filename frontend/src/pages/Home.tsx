@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getProducts } from '../services/products';
 import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
+import Benefits from '../components/Benefits';
 import type { Product } from '../types';
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,14 +29,14 @@ export default function Home() {
               Shop products
             </Link>
           </div>
-          <div className="hero-card">
+          <Link to="/products" className="hero-card">
             <span>New arrivals</span>
             <strong>
               Fresh picks
               <br />
               for your day.
             </strong>
-          </div>
+          </Link>
         </div>
       </section>
       <section className="section container">
@@ -58,22 +59,7 @@ export default function Home() {
           </div>
         )}
       </section>
-      <section className="benefits">
-        <div className="container benefits-grid">
-          <div>
-            <strong>Secure checkout</strong>
-            <span>Powered by Stripe</span>
-          </div>
-          <div>
-            <strong>Simple returns</strong>
-            <span>Easy order management</span>
-          </div>
-          <div>
-            <strong>Account control</strong>
-            <span>Manage your profile</span>
-          </div>
-        </div>
-      </section>
+      <Benefits />
     </>
   );
 }

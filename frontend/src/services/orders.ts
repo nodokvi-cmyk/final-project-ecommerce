@@ -1,9 +1,9 @@
 import { api } from './api';
-import type { Order, OrderItem, OrderStatus } from '../types';
+import type { Order, OrderStatus } from '../types';
 
+// The server builds the order from the user's cart.
 export interface CreateOrderData {
   shippingAddress: string;
-  orderedItems: OrderItem[];
 }
 
 export const createOrder = (data: CreateOrderData) =>

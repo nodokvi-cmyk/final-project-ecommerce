@@ -21,6 +21,8 @@ async function bootstrap() {
     );
 
     app.enableCors();
+    // Same as src/main.ts: the client IP comes from X-Forwarded-For.
+    server.set('trust proxy', 1);
     app.useLogger(app.get(Logger));
 
     app.useGlobalPipes(

@@ -15,24 +15,8 @@ export default function Checkout() {
     setLoading(true);
     setError('');
     try {
-      const order = await createOrder({
-        shippingAddress: address,
-        orderedItems: cart.items.map((item) => ({
-          productId: item.productId,
-          name: item.product?.productName || 'Product',
-          price: Number(item.price),
-          quantity: item.quantity,
-        })),
-      });
-      const payment = await createCheckout({
-        orderId: order._id,
-        items: order.orderedItems.map((i) => ({
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-        })),
-        currency: 'usd',
-      });
+      const order = await createOrder({ shippingAddress: address });
+      const payment = await createCheckout({ orderId: order._id });
       window.location.href = payment.url;
     } catch (e) {
       setError(errorMessage(e));

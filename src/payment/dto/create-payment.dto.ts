@@ -1,32 +1,9 @@
-import { Transform, Type } from "class-transformer"
-import { IsArray, IsInt, IsNotEmpty, IsNumber, IsPositive, IsString, ValidateNested } from "class-validator"
+import { IsMongoId, IsNotEmpty } from 'class-validator';
 
-export class PaymentItemDto{
-    @IsNotEmpty()
-    @IsString()
-    name!: string
-
-    @IsNotEmpty()
-    @IsPositive()
-    @IsNumber()
-    @Transform(({value}) => Number(value))
-    price!: number
-
-    @IsNotEmpty()
-    @IsPositive()
-    @IsInt()
-    @IsNumber()
-    @Transform(({value}) => Number(value))
-    quantity!: number
-}
-
+// Only the order id comes from the client. Items, prices and currency are
+// read from the stored order on the server.
 export class CreatePaymentDto {
-    @IsArray()
-    @ValidateNested({each: true})
-    @Type(() => PaymentItemDto)
-    items!: PaymentItemDto[]
-
-    @IsNotEmpty()
-    @IsString()
-    currency!: string
+  @IsNotEmpty()
+  @IsMongoId()
+  orderId!: string;
 }

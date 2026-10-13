@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import WishlistButton from './WishlistButton';
+import { isLowStock } from '../utils/stock';
 import type { Product } from '../types';
 export default function ProductCard({ product }: { product: Product }) {
   const { add } = useCart();
@@ -23,6 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
     }
   };
   const image = product.photos?.[0];
+  const low = isLowStock(product.stock);
   return (
     <article className="product-card">
       <WishlistButton productId={product._id} />
@@ -32,6 +34,7 @@ export default function ProductCard({ product }: { product: Product }) {
         ) : (
           <span>No image</span>
         )}
+        {low && <span className="low-stock-badge">Almost gone</span>}
       </Link>
       <div className="product-info">
         <div className="muted">{product.category}</div>
@@ -40,8 +43,16 @@ export default function ProductCard({ product }: { product: Product }) {
         </Link>
         <div className="product-row">
           <strong>${Number(product.price).toFixed(2)}</strong>
-          <span className={product.stock > 0 ? 'stock' : 'out'}>
-            {product.stock > 0 ? `${product.stock} left` : 'Out of stock'}
+          <span
+            className={
+              product.stock <= 0 ? 'out' : low ? 'stock low-stock' : 'stock'
+            }
+          >
+            {product.stock <= 0
+              ? 'Out of stock'
+              : low
+                ? `Only ${product.stock} left`
+                : `${product.stock} left`}
           </span>
         </div>
         <button

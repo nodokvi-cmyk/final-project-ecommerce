@@ -2,6 +2,7 @@ import { errorMessage } from '../utils/error';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import QuantityInput from '../components/QuantityInput';
 export default function Cart() {
   const { cart, update, remove, clear } = useCart();
   const navigate = useNavigate();
@@ -46,25 +47,13 @@ export default function Cart() {
                   <strong>{item.product?.productName || item.productId}</strong>
                   <span>${Number(item.price).toFixed(2)}</span>
                 </div>
-                <div className="quantity">
-                  <button
-                    onClick={() =>
-                      run(() =>
-                        update(item.productId, Math.max(1, item.quantity - 1)),
-                      )
-                    }
-                  >
-                    −
-                  </button>
-                  <span>{item.quantity}</span>
-                  <button
-                    onClick={() =>
-                      run(() => update(item.productId, item.quantity + 1))
-                    }
-                  >
-                    +
-                  </button>
-                </div>
+                <QuantityInput
+                  value={item.quantity}
+                  max={item.product?.stock}
+                  onChange={(quantity) =>
+                    run(() => update(item.productId, quantity))
+                  }
+                />
                 <button
                   className="remove"
                   onClick={() => run(() => remove(item.productId))}

@@ -1,10 +1,13 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useGuardedLink } from '../utils/useGuardedLink';
+import Icon from './Icon';
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { count } = useCart();
   const navigate = useNavigate();
+  const guarded = useGuardedLink();
   return (
     <header className="nav">
       <div className="nav-inner">
@@ -12,28 +15,55 @@ export default function Navbar() {
           SHOPLY
         </Link>
         <nav>
-          <NavLink to="/products">Shop</NavLink>
-          {user && <NavLink to="/wishlist">Wishlist</NavLink>}
-          {user && <NavLink to="/orders">Orders</NavLink>}
-          {user?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
+          <NavLink to="/products">
+            <Icon name="shop" />
+            <span>Shop</span>
+          </NavLink>
+          {user && (
+            <NavLink to="/wishlist">
+              <Icon name="heart" />
+              <span>Wishlist</span>
+            </NavLink>
+          )}
+          {user && (
+            <NavLink to="/orders">
+              <Icon name="orders" />
+              <span>Orders</span>
+            </NavLink>
+          )}
+          {user?.role === 'admin' && (
+            <NavLink to="/admin">
+              <Icon name="admin" />
+              <span>Admin</span>
+            </NavLink>
+          )}
         </nav>
         <div className="nav-actions">
-          <Link to="/cart" className="cart-link">
-            Cart <span>{count}</span>
+          <Link
+            {...guarded('/cart')}
+            className="cart-link"
+            aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}
+            title="Cart"
+          >
+            <Icon name="cart" size={22} />
+            <span className="cart-count">{count}</span>
           </Link>
           {user ? (
             <>
-              <Link to="/profile" className="user-link">
-                {user.fullName}
+              <Link to="/profile" className="user-link" title="Profile">
+                <Icon name="user" />
+                <span>{user.fullName}</span>
               </Link>
               <button
-                className="link-btn"
+                className="link-btn logout-btn"
+                title="Logout"
                 onClick={() => {
                   logout();
                   navigate('/');
                 }}
               >
-                Logout
+                <Icon name="logout" />
+                <span>Logout</span>
               </button>
             </>
           ) : (

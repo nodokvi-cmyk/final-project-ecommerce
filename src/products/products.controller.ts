@@ -1,4 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFiles, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  UseInterceptors,
+  UploadedFiles,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -21,28 +36,38 @@ export class ProductsController {
   create(
     @Body() createProductDto: CreateProductDto,
     @UploadedFiles(
-    new ParseFilePipe({
-      fileIsRequired: false,
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
-      ],
-    }),
-  )
-  files?: Array<Express.Multer.File>
-) {
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    files?: Array<Express.Multer.File>,
+  ) {
     return this.productsService.create(createProductDto, files);
   }
 
   @Get()
-  findAll(
-    @Query() query: ProductQueryDto
-  ) {
+  findAll(@Query() query: ProductQueryDto) {
     return this.productsService.findAll(query);
   }
 
+  // The routes below are declared before ':id' so their names are not parsed
+  // as a product id.
+  @Get('count')
+  count(@Query() query: ProductQueryDto) {
+    return this.productsService.count(query);
+  }
+
+  @Get('categories')
+  findCategories() {
+    return this.productsService.findCategories();
+  }
+
   @Get(':id')
-  findOne(@Param() {id}: IsValidMongoIdDto) {
+  findOne(@Param() { id }: IsValidMongoIdDto) {
     return this.productsService.findOne(id);
   }
 
@@ -51,18 +76,18 @@ export class ProductsController {
   @Roles(UserRole.ADMIN)
   @UseInterceptors(FilesInterceptor('photos', 6))
   update(
-    @Param() {id}: IsValidMongoIdDto,
+    @Param() { id }: IsValidMongoIdDto,
     @Body() updateProductDto: UpdateProductDto,
     @UploadedFiles(
-    new ParseFilePipe({
-      fileIsRequired: false,
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
-      ],
-    }),
-  )
-  files?: Array<Express.Multer.File>,
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    files?: Array<Express.Multer.File>,
   ) {
     return this.productsService.update(id, updateProductDto, files);
   }
@@ -71,7 +96,7 @@ export class ProductsController {
   @UseGuards(IsAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   deleteSinglePhoto(
-    @Param() {id}: IsValidMongoIdDto,
+    @Param() { id }: IsValidMongoIdDto,
     @Body('photoUrl') photoUrl: string,
   ) {
     return this.productsService.deleteSinglePhoto(id, photoUrl);
@@ -80,7 +105,7 @@ export class ProductsController {
   @Delete(':id')
   @UseGuards(IsAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  remove(@Param() {id}: IsValidMongoIdDto) {
+  remove(@Param() { id }: IsValidMongoIdDto) {
     return this.productsService.remove(id);
   }
 }

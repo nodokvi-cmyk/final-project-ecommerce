@@ -15,29 +15,35 @@ import { PaymentModule } from './payment/payment.module';
 import { OrdersModule } from './orders/orders.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { EmailSenderModule } from './email-sender/email-sender.module.js';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
-    CacheModule.register({isGlobal: true}),
+    CacheModule.register({ isGlobal: true }),
     LoggerModule.forRoot({
       pinoHttp: {
-        transport: process.env.NODE_ENV !== 'production'
-          ? {
-              target: 'pino-pretty',
-              options: { singleLine: true },
-            }
-          : undefined, 
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? {
+                target: 'pino-pretty',
+                options: { singleLine: true },
+              }
+            : undefined,
       },
     }),
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
     }),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET
+      secret: process.env.JWT_SECRET,
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI!),
-    PassportModule.register({defaultStrategy: "google"}),
+    // Not applied globally: only controllers that opt in with ThrottlerGuard
+    // (the chat) are limited. This is the fallback limit for those.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
+    PassportModule.register({ defaultStrategy: 'google' }),
     UsersModule,
     AuthModule,
     ProductsModule,
@@ -45,7 +51,8 @@ import { EmailSenderModule } from './email-sender/email-sender.module.js';
     PaymentModule,
     OrdersModule,
     WishlistModule,
-    EmailSenderModule
+    EmailSenderModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -3,14 +3,21 @@ import type { Product } from '../types';
 
 export type ProductQuery = Record<string, string | number | null | undefined>;
 
-export const getProducts = (params: ProductQuery = {}) => {
+const toQueryString = (params: ProductQuery) => {
   const q = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v !== '' && v !== undefined && v !== null) q.set(k, String(v));
   });
   const qs = q.toString();
-  return api.get<Product[]>(`/products${qs ? `?${qs}` : ''}`);
+  return qs ? `?${qs}` : '';
 };
+
+export const getProducts = (params: ProductQuery = {}) =>
+  api.get<Product[]>(`/products${toQueryString(params)}`);
+// Number of products matching the filters, ignoring page and take.
+export const getProductCount = (params: ProductQuery = {}) =>
+  api.get<{ total: number }>(`/products/count${toQueryString(params)}`);
+export const getCategories = () => api.get<string[]>('/products/categories');
 export const getProduct = (id: string) => api.get<Product>(`/products/${id}`);
 export const createProduct = (data: FormData) =>
   api.post<Product>('/products', data);

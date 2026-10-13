@@ -1,36 +1,9 @@
-import { Transform, Type } from "class-transformer";
-import { IsArray, IsInt, IsMongoId, IsNotEmpty, IsNumber, IsPositive, IsString, ValidateNested } from "class-validator";
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateOrderItemDto {
-    @IsNotEmpty()
-    @IsMongoId()
-    productId!: string
-
-    @IsNotEmpty()
-    @IsString()
-    name!: string
-    
-    @IsNotEmpty()
-    @IsPositive()
-    @IsNumber()
-    @Transform(({value}) => Number(value))
-    price!: number
-
-    @IsNotEmpty()
-    @IsInt()
-    @IsNumber()
-    @Transform(({value}) => Number(value))
-    quantity!: number
-}
-
-export class CreateOrderDto{
-    @IsNotEmpty()
-    @IsArray()
-    @ValidateNested({each: true})
-    @Type(() => CreateOrderItemDto)
-    orderedItems!: CreateOrderItemDto[]
-
-    @IsNotEmpty()
-    @IsString()
-    shippingAddress!: string
+// Items, names and prices are never taken from the client. The order is built
+// from the caller's server-side cart and the current product data.
+export class CreateOrderDto {
+  @IsNotEmpty()
+  @IsString()
+  shippingAddress!: string;
 }

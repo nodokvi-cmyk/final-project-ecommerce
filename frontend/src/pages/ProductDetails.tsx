@@ -6,6 +6,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Loading from '../components/Loading';
 import WishlistButton from '../components/WishlistButton';
+import QuantityInput from '../components/QuantityInput';
+import { isLowStock } from '../utils/stock';
 import type { Product } from '../types';
 export default function ProductDetails() {
   const { id = '' } = useParams();
@@ -78,17 +80,25 @@ export default function ProductDetails() {
           <h1>{product.productName}</h1>
           <div className="price large">${Number(product.price).toFixed(2)}</div>
           <p>{product.description}</p>
-          <div className="stock-line">
-            {product.stock > 0 ? `${product.stock} available` : 'Out of stock'}
+          <div
+            className={
+              isLowStock(product.stock) ? 'stock-line low-stock' : 'stock-line'
+            }
+          >
+            {product.stock <= 0
+              ? 'Out of stock'
+              : isLowStock(product.stock)
+                ? `Only ${product.stock} left. Order soon, it may sell out.`
+                : `${product.stock} available`}
           </div>
           <div className="buy-row">
-            <div className="quantity">
-              <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
-              <span>{qty}</span>
-              <button onClick={() => setQty(Math.min(product.stock, qty + 1))}>
-                +
-              </button>
-            </div>
+            <QuantityInput
+              live
+              value={qty}
+              max={product.stock}
+              disabled={!product.stock}
+              onChange={setQty}
+            />
             <button className="btn" disabled={!product.stock} onClick={addItem}>
               Add to cart
             </button>

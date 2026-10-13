@@ -1,2 +1,8 @@
 .env
+.env.*
+!.env.example
+.vercel
+*.tsbuildinfo
 /node_modules
+/dist
+.design-backup/

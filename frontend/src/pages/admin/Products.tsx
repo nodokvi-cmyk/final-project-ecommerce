@@ -1,16 +1,25 @@
 import { errorMessage } from '../../utils/error';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteProduct, getProducts } from '../../services/products';
+import {
+  deleteProduct,
+  getProductCount,
+  getProducts,
+} from '../../services/products';
+import Pagination from '../../components/Pagination';
 import type { Product } from '../../types';
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [error, setError] = useState('');
+  const [total, setTotal] = useState(0);
   const take = 30;
   const load = (p = page) =>
-    getProducts({ take, page: p })
-      .then(setProducts)
+    Promise.all([getProducts({ take, page: p }), getProductCount()])
+      .then(([items, count]) => {
+        setProducts(items);
+        setTotal(count.total);
+      })
       .catch((e) => setError(errorMessage(e)));
   useEffect(() => {
     load(page);
@@ -25,6 +34,18 @@ export default function AdminProducts() {
       }
     }
   };
+  const pager = (
+    <Pagination
+      page={page}
+      pageSize={take}
+      count={products.length}
+      total={total}
+      onChange={(next) => {
+        setPage(next);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }}
+    />
+  );
   return (
     <section className="section container">
       <div className="page-heading">
@@ -37,6 +58,7 @@ export default function AdminProducts() {
         </Link>
       </div>
       {error && <div className="error">{error}</div>}
+      {pager}
       <div className="admin-table">
         {products.map((p) => (
           <div className="admin-row" key={p._id}>
@@ -60,23 +82,7 @@ export default function AdminProducts() {
           </div>
         ))}
       </div>
-      <div className="row-actions">
-        <button
-          className="ghost"
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-        >
-          Previous
-        </button>
-        <span>Page {page}</span>
-        <button
-          className="ghost"
-          disabled={products.length < take}
-          onClick={() => setPage(page + 1)}
-        >
-          Next
-        </button>
-      </div>
+      {pager}
     </section>
   );
 }

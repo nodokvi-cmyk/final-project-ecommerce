@@ -4,6 +4,8 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
+import ChatWidget from './components/ChatWidget';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
@@ -31,6 +33,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
+            <ScrollToTop />
             <Navbar />
             <main>
               <Routes>
@@ -66,6 +69,7 @@ export default function App() {
               </Routes>
             </main>
             <Footer />
+            <ChatWidget />
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
